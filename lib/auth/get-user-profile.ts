@@ -14,6 +14,10 @@ export async function getUserProfile({
   const { data, error } = await supabaseClient.auth.getUser()
 
   if (error) {
+    if (error.name === "AuthSessionMissingError") {
+      return { ok: false, error: AuthErrorCode.UNAUTHENTICATED }
+    }
+
     logAuthEvent({
       level: "error",
       code: AuthErrorCode.AUTH_PROVIDER_ERROR,
@@ -23,25 +27,31 @@ export async function getUserProfile({
         },
       },
     })
+
     return { ok: false, error: AuthErrorCode.AUTH_PROVIDER_ERROR }
   }
 
-  if (!data?.user?.id || !data.user.email) {
-    logAuthEvent({
-      level: "warn",
-      code: AuthErrorCode.UNAUTHENTICATED,
-      context: {
-        details: {
-          reason: "Missing id or email from provider",
-          receivedUserId: data?.user?.id ?? null,
-          receivedEmail: data?.user?.email ?? null,
-        },
-      },
-    })
+  if (!data?.user) {
     return { ok: false, error: AuthErrorCode.UNAUTHENTICATED }
   }
 
-  const userId = data.user.id
+  const { id: userId, email } = data.user
+
+  if (!userId || !email) {
+    logAuthEvent({
+      level: "error",
+      code: AuthErrorCode.AUTH_PROVIDER_ERROR,
+      context: {
+        details: {
+          reason: "Provider returned user without id or email",
+          receivedUserId: userId ?? null,
+          receivedEmail: email ?? null,
+        },
+      },
+    })
+
+    return { ok: false, error: AuthErrorCode.AUTH_PROVIDER_ERROR }
+  }
 
   const { data: profile, error: profileError } = await supabaseClient
     .from("profiles")
@@ -52,7 +62,7 @@ export async function getUserProfile({
   if (profileError || !profile) {
     logAuthEvent({
       level: "error",
-      code: AuthErrorCode.PROFILE_NOT_FOUND,
+      code: AuthErrorCode.USER_NOT_FOUND,
       context: {
         userId,
         details: {
@@ -60,14 +70,15 @@ export async function getUserProfile({
         },
       },
     })
-    return { ok: false, error: AuthErrorCode.PROFILE_NOT_FOUND }
+
+    return { ok: false, error: AuthErrorCode.USER_NOT_FOUND }
   }
 
   return {
     ok: true,
     profile: {
       id: profile.id,
-      email: data.user.email,
+      email,
       isActive: profile.is_active,
       role: profile.role as UserProfile["role"],
     },
