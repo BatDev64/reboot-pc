@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# reboot-pc-dashboard
 
-## Getting Started
+Dashboard web application built with **Next.js 16** and **TypeScript**. It provides authentication, role-based access, and basic management of products and users. The backend is powered by Supabase, and Tailwind CSS handles styling.
 
-First, run the development server:
+---
+
+## 🛠 Requirements
+
+- Node.js 20 or newer
+- [pnpm](https://pnpm.io/) (project uses a workspace)
+- A Supabase project with **Auth** and **Database** enabled
+- (Optional) Supabase CLI for local development and type generation
+
+---
+
+## 🚀 Getting Started
+
+1. **Clone the repository**
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd reboot-pc-dashboard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Configure environment variables**
 
-## Learn More
+Copy the example env and fill in your Supabase credentials:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cp .env.example .env.local
+# edit .env.local with your values
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Required variables:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-## Deploy on Vercel
+4. **Generate database types** (optional but recommended)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm run gen:types
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The script uses the project ID defined in `package.json` to fetch and generate TypeScript types under `./types/database.types.ts`.
+
+5. **Start the development server**
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+---
+
+## 📁 Project Structure
+
+- `app/` – Next.js app router entrypoints and layouts
+  - `(auth)` – login and authentication flows
+  - `(dashboard)` – protected dashboard with nested routes (`products/`, `users/`)
+- `components/` – shared UI components (e.g. `theme-toggle.tsx`)
+- `lib/` – utilities, Supabase client, auth guards
+- `constants/`, `types/`, `schemas/` – shared definitions and validation
+- `supabase/` – local Supabase configuration and migrations
+- `public/` – static assets
+
+---
+
+## 📦 Available Scripts
+
+| Command              | Description                |
+| -------------------- | -------------------------- |
+| `pnpm dev`           | Run development server     |
+| `pnpm build`         | Build for production       |
+| `pnpm start`         | Start production server    |
+| `pnpm lint`          | Run ESLint                 |
+| `pnpm run gen:types` | Generate Supabase DB types |
+
+---
+
+## 💡 Technologies
+
+- Next.js 16 (app directory)
+- React 19 + TypeScript
+- Tailwind CSS 4 & PostCSS
+- Supabase (Auth + Database)
+- Zod for validation
+- ESLint + Prettier configuration
+
+---
+
+## 📦 Deployment
+
+You can deploy to any Node.js hosting provider. Vercel is recommended for easy integration with Next.js.
+Ensure environment variables are set in production and run:
+
+```bash
+pnpm build
+pnpm start
+```
+
+---
+
+## 🤝 Contributing
+
+Feel free to open issues or pull requests. Keep code style consistent and run `pnpm lint` before committing.
+
+---
+
+## 📜 License
+
+This project is released under the MIT License. (Update if different.)
