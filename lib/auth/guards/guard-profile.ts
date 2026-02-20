@@ -1,7 +1,7 @@
 // lib/auth/guards/require-dashboard-user.ts
 
 import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/constants/routes"
-import { logAuthEvent } from "@/lib/logger/server-auth-logger"
+import { logAuthEvent } from "@/lib/loggers/loggers"
 import { AuthErrorCode, type AuthResult, UserProfile } from "@/types/auth"
 import { redirect } from "next/navigation"
 

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { logAuthEvent } from "@/lib/logger/server-auth-logger"
+import { logAuthEvent } from "@/lib/loggers/loggers"
 import { loginSchema, type LoginSchema } from "@/schemas/auth"
 import { AuthErrorCode } from "@/types/auth"
 import { AUTH_ERROR_MESSAGES } from "@/constants/auth-messages"

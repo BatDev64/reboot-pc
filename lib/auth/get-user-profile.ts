@@ -2,7 +2,7 @@ import { AuthErrorCode, type AuthResult } from "@/types/auth"
 import { type UserProfile } from "@/types/auth"
 import { type Database } from "@/types/database.types"
 import { type SupabaseClient } from "@supabase/supabase-js"
-import { logAuthEvent } from "../logger/server-auth-logger"
+import { logAuthEvent } from "../loggers/loggers"
 
 interface GetUserProfileArgs {
   supabaseClient: SupabaseClient<Database>
@@ -42,9 +42,9 @@ export async function getUserProfile({
       level: "error",
       code: AuthErrorCode.AUTH_PROVIDER_ERROR,
       context: {
+        userId,
         details: {
           reason: "Provider returned user without id or email",
-          receivedUserId: userId ?? null,
           receivedEmail: email ?? null,
         },
       },
