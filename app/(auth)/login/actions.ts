@@ -6,8 +6,8 @@ import { logAuthEvent } from "@/lib/logger/server-auth-logger"
 import { loginSchema, type LoginSchema } from "@/schemas/auth"
 import { AuthErrorCode } from "@/types/auth"
 import { AUTH_ERROR_MESSAGES } from "@/constants/auth-messages"
-import { flattenError } from "zod"
 import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/constants/routes"
+import { validateForm } from "@/lib/utils/validate-form"
 
 interface PrevState {
   message: string | null
@@ -18,31 +18,26 @@ export async function loginAction(
   prevState: PrevState | null,
   formData: FormData,
 ): Promise<PrevState> {
-  const validatedFields = loginSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  })
+  const result = validateForm({ formData, schema: loginSchema })
 
-  if (!validatedFields.success) {
-    const errors = flattenError(validatedFields.error).fieldErrors
-
+  if (!result.success) {
     logAuthEvent({
       level: "warn",
       code: AuthErrorCode.VALIDATION_FAILED,
       context: {
         details: {
-          errors,
+          errors: result.errors,
         },
       },
     })
 
     return {
       message: AUTH_ERROR_MESSAGES[AuthErrorCode.VALIDATION_FAILED],
-      errors,
+      errors: result.errors,
     }
   }
 
-  const { email, password } = validatedFields.data
+  const { email, password } = result.data
 
   try {
     const supabase = await createClient()
