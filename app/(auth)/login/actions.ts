@@ -8,80 +8,52 @@ import { AuthErrorCode } from "@/types/auth"
 import { AUTH_ERROR_MESSAGES } from "@/constants/auth-messages"
 import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/constants/routes"
 import { validateForm } from "@/lib/utils/validate-form"
-
-interface PrevState {
-  message: string | null
-  errors: Partial<Record<keyof LoginSchema, string[] | undefined>>
-}
+import { type ActionResult } from "@/types/action-result"
+import { login } from "@/lib/domain/auth-service"
+import { AuthError } from "@/lib/errors/errors"
 
 export async function loginAction(
-  prevState: PrevState | null,
+  prevState: ActionResult<null, keyof LoginSchema> | null,
   formData: FormData,
-): Promise<PrevState> {
+): Promise<ActionResult<null, keyof LoginSchema>> {
   const result = validateForm({ formData, schema: loginSchema })
 
   if (!result.success) {
-    logAuthEvent({
-      level: "warn",
-      code: AuthErrorCode.VALIDATION_FAILED,
-      context: {
-        details: {
-          errors: result.errors,
-        },
-      },
-    })
-
     return {
-      message: AUTH_ERROR_MESSAGES[AuthErrorCode.VALIDATION_FAILED],
-      errors: result.errors,
+      success: false,
+      error: AUTH_ERROR_MESSAGES[AuthErrorCode.VALIDATION_FAILED],
+      fieldErrors: result.errors,
     }
   }
 
   const { email, password } = result.data
 
   try {
-    const supabase = await createClient()
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
+    await login({ email, password })
+  } catch (err) {
+    if (err instanceof AuthError) {
       logAuthEvent({
         level: "warn",
-        code: AuthErrorCode.INVALID_CREDENTIALS,
-        context: { details: { email, error: error.message } },
+        code: err.code,
+        context: {
+          details: {
+            error: err.message,
+            details: err.details,
+          },
+        },
       })
 
       return {
-        message: AUTH_ERROR_MESSAGES[AuthErrorCode.INVALID_CREDENTIALS],
-        errors: {},
+        success: false,
+        error: AUTH_ERROR_MESSAGES[err.code],
+        fieldErrors: {},
       }
     }
-
-    if (!data.user) {
-      logAuthEvent({
-        level: "error",
-        code: AuthErrorCode.USER_NOT_FOUND,
-        context: { details: { email } },
-      })
-
-      return {
-        message: AUTH_ERROR_MESSAGES[AuthErrorCode.USER_NOT_FOUND],
-        errors: {},
-      }
-    }
-  } catch (err) {
-    logAuthEvent({
-      level: "error",
-      code: AuthErrorCode.AUTH_PROVIDER_ERROR,
-      context: { details: { error: err } },
-    })
 
     return {
-      message: AUTH_ERROR_MESSAGES[AuthErrorCode.AUTH_PROVIDER_ERROR],
-      errors: {},
+      success: false,
+      error: "Unexpected error",
+      fieldErrors: {},
     }
   }
 

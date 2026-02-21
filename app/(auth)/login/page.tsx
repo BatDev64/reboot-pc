@@ -2,23 +2,36 @@
 
 import { useActionState } from "react"
 import { loginAction } from "./actions"
+import { ActionResult } from "@/types/action-result"
+import { LoginSchema } from "@/schemas/auth"
+
+const initialState: ActionResult<null, keyof LoginSchema> = {
+  error: "",
+  fieldErrors: null,
+  success: false,
+}
 
 export default function LoginPage() {
-  const [state, formAction, isLoading] = useActionState(loginAction, {
-    message: null,
-    errors: {},
-  })
+  const [state, formAction, isLoading] = useActionState(
+    loginAction,
+    initialState,
+  )
 
-  const emailErrors = state.errors?.email ?? []
-  const isEmailError = emailErrors.length > 0
-  const emailMsg = isEmailError ? emailErrors.join(", ") : null
+  const isSuccess = state.success
 
-  const passWordErrors = state.errors?.password ?? []
-  const isPasswordError = passWordErrors.length > 0
-  const passwordMsg = isPasswordError ? passWordErrors.join(", ") : null
+  let emailMsg = ""
+  let passwordMsg = ""
+  let formErrorMsg = ""
 
-  const isFormError = state.message !== null
-  const formErrorMsg = isFormError ? state.message : null
+  if (!isSuccess) {
+    emailMsg = state.fieldErrors?.email?.join(", ") || ""
+    passwordMsg = state.fieldErrors?.password?.join(", ") || ""
+    formErrorMsg = state.error || ""
+  }
+
+  const isEmailError = !!emailMsg
+  const isPasswordError = !!passwordMsg
+  const isFormError = !!formErrorMsg
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -45,7 +58,7 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
 
-              {isEmailError && (
+              {!isSuccess && isEmailError && (
                 <div className="rounded-md bg-red-50 p-4">
                   <p className="text-sm text-red-700">{emailMsg}</p>
                 </div>
@@ -66,7 +79,7 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
 
-              {isPasswordError && (
+              {!isSuccess && isPasswordError && (
                 <div className="rounded-md bg-red-50 p-4">
                   <p className="text-sm text-red-700">{passwordMsg}</p>
                 </div>
@@ -83,7 +96,7 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
-        {isFormError && (
+        {!isSuccess && isFormError && (
           <div className="rounded-md bg-red-50 p-4">
             <p className="text-sm text-red-700">{formErrorMsg}</p>
           </div>
